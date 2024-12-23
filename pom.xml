@@ -16,6 +16,15 @@
     <description>booksfrog application</description>
     <properties>
         <java.version>17</java.version>
+        <sonar.java.binaries>target/classes</sonar.java.binaries>
+        <sonar.sources>src/main/java</sonar.sources>
+        <sonar.tests>src/test/java</sonar.tests>
+        <sonar.log.level>true</sonar.log.level>
+        <junit.jupiter.version>5.8.2</junit.jupiter.version>
+        <sonar.language>java</sonar.language>
+        <soanr.token>sqb_d1862c9bd96eefb137c58e0a7c49147f77df81e1</soanr.token>
+        <sonar.projectKey>AhmedFatrah2001_booksfrog_backend_90cdb363-6a8d-48c8-949d-98a0d756e60f</sonar.projectKey>
+        <sonar.projectName>booksfrog_backend</sonar.projectName>
     </properties>
 
     <dependencies>
