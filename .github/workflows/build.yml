@@ -36,4 +36,4 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=AhmedFatrah2001_booksfrog_backend_90cdb363-6a8d-48c8-949d-98a0d756e60f -Dsonar.projectName='booksfrog_backend'
+        run: mvn clean verify sonar:sonar
