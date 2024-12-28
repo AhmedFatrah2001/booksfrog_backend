@@ -35,6 +35,13 @@ public class Book {
     @JoinColumn(name = "category_id")
     private Category category;
 
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private int views;
+
+    @Column(name = "total_pages", nullable = true)
+    private Integer totalPages;
+
+
     public Book(Long id, String title, String author, String summary, byte[] cover, Long categoryId) {
         this.id = id;
         this.title = title;

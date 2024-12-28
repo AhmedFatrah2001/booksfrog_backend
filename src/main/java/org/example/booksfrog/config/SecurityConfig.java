@@ -22,7 +22,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final CustomUserDetailsService customUserDetailsService;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, CustomUserDetailsService customUserDetailsService) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, 
+                          CustomUserDetailsService customUserDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.customUserDetailsService = customUserDetailsService;
     }
@@ -30,22 +31,38 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)  // Updated syntax for disabling CSRF
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()  // Specify public endpoints
-                        .anyRequest().authenticated())  // Protect all other endpoints
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);  // Add JWT filter
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors() // Enable CORS
+            .and()
+            .authorizeHttpRequests(auth -> auth
+                // Authentication APIs
+                .requestMatchers("/api/auth/**").permitAll()
+                // Categories might be public or authenticated—here we allow all
+                .requestMatchers("/api/categories/**").permitAll()
+                // Let’s allow retrieving book content publicly OR only if authenticated:
+                // If you want only logged-in users to see PDFs, switch this to .authenticated().
+                .requestMatchers("/api/books/*/content").permitAll()
+                
+                // You had this example to require auth for recalc:
+                .requestMatchers("/api/books/recalculate-total-pages").authenticated()
+                
+                // Everything else must be authenticated
+                .anyRequest().authenticated()
+            )
+            // Add the JWT filter
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
     public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
-        authenticationManagerBuilder
-                .userDetailsService(customUserDetailsService)
-                .passwordEncoder(passwordEncoder());
-        return authenticationManagerBuilder.build();
+        AuthenticationManagerBuilder builder = 
+            http.getSharedObject(AuthenticationManagerBuilder.class);
+        builder
+            .userDetailsService(customUserDetailsService)
+            .passwordEncoder(passwordEncoder());
+        return builder.build();
     }
 
     @Bean
