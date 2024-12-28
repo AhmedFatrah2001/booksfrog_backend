@@ -16,4 +16,8 @@ public class BookDTO {
     private String summary;
     private String coverImage;
     private Long categoryId;
+    private String categoryName;
+    private int views;
+    private Integer totalPages;
 }
+ 

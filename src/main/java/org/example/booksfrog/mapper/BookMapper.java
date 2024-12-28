@@ -19,6 +19,9 @@ public class BookMapper {
                 .summary(book.getSummary())
                 .coverImage(book.getCoverImage()) // Already Base64 encoded in the `getCoverImage` method
                 .categoryId(book.getCategoryId())
+                .categoryName(book.getCategory() != null ? book.getCategory().getName() : null) // Add categoryName
+                .views(book.getViews())
+                .totalPages(book.getTotalPages())
                 .build();
     }
 }
