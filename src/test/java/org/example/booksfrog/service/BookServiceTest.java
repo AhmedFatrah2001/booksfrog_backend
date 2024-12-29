@@ -33,12 +33,11 @@ class BookServiceTest {
     private BookService bookService;
 
     private Book book;
-    private Category category;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        category = Category.builder().id(1L).name("Test Category").build();
+        Category category = Category.builder().id(1L).name("Test Category").build();
         book = Book.builder()
                 .id(1L)
                 .title("Test Book")
@@ -129,7 +128,42 @@ class BookServiceTest {
         verify(bookRepository, never()).save(any(Book.class));
     }
 
+    @Test
+    void testRecalculateTotalPages_WithContentAndPagesNull() {
+        book.setContent(new byte[]{1, 2, 3});
+        book.setTotalPages(null);
+        when(bookRepository.findAll()).thenReturn(Collections.singletonList(book));
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
 
+        bookService.recalculateTotalPages();
+
+        assertNotNull(book.getTotalPages());
+        verify(bookRepository, times(1)).findAll();
+        verify(bookRepository, times(1)).save(any(Book.class));
+    }
+
+    @Test
+    void testRecalculateTotalPages_WithContentAndPagesNotNull() {
+        book.setContent(new byte[]{1, 2, 3});
+        book.setTotalPages(100);
+        when(bookRepository.findAll()).thenReturn(Collections.singletonList(book));
+
+        bookService.recalculateTotalPages();
+
+        verify(bookRepository, times(1)).findAll();
+        verify(bookRepository, never()).save(any(Book.class));
+    }
+
+    @Test
+    void testRecalculateTotalPages_WithoutContent() {
+        book.setContent(null);
+        when(bookRepository.findAll()).thenReturn(Collections.singletonList(book));
+
+        bookService.recalculateTotalPages();
+
+        verify(bookRepository, times(1)).findAll();
+        verify(bookRepository, never()).save(any(Book.class));
+    }
 
     @Test
     void testGetAllBooks() {

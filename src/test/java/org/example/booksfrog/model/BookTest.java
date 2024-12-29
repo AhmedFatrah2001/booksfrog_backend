@@ -25,6 +25,28 @@ class BookTest {
     }
 
     @Test
+    void testConstructorWithParameters() {
+        Long id = 1L;
+        String title = "Constructor Test Book";
+        String author = "Constructor Test Author";
+        String summary = "Constructor Test Summary";
+        byte[] cover = new byte[]{10, 20, 30};
+        Long categoryId = 2L;
+
+        // Use the constructor with parameters
+        Book book1 = new Book(id, title, author, summary, cover, categoryId);
+
+        // Assertions
+        assertEquals(id, book1.getId());
+        assertEquals(title, book1.getTitle());
+        assertEquals(author, book1.getAuthor());
+        assertEquals(summary, book1.getSummary());
+        assertArrayEquals(cover, book1.getCover());
+        assertNotNull(book1.getCategory());
+        assertEquals(categoryId, book1.getCategory().getId());
+    }
+
+    @Test
     void testBookAttributes() {
         assertEquals(1L, book.getId());
         assertEquals("Test Book", book.getTitle());
