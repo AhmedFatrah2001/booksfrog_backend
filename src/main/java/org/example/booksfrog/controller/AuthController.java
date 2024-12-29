@@ -16,17 +16,23 @@ import org.springframework.http.HttpStatus;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final CustomUserDetailsService userDetailsService;
+    private final UserService userService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    public AuthController(
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil,
+            CustomUserDetailsService userDetailsService,
+            UserService userService) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
+        this.userService = userService;
+    }
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
-    private UserService userService;
 
     // POST method for login and token generation
     @PostMapping("/login")

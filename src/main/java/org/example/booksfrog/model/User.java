@@ -2,7 +2,6 @@ package org.example.booksfrog.model;
 
 import lombok.*;
 import jakarta.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity

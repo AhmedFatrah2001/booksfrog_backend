@@ -6,6 +6,11 @@ import java.io.ByteArrayInputStream;
 
 public class PdfUtils {
 
+    // Private constructor to prevent instantiation
+    private PdfUtils() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
     /**
      * Get the total number of pages in a PDF from a byte array.
      * 

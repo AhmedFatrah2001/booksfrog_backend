@@ -3,9 +3,13 @@ package org.example.booksfrog.mapper;
 import org.example.booksfrog.dto.BookDTO;
 import org.example.booksfrog.model.Book;
 
-import java.util.Base64;
 
 public class BookMapper {
+
+    // Private constructor to prevent instantiation
+    private BookMapper() {
+        throw new UnsupportedOperationException("Utility class");
+    }
 
     public static BookDTO toDTO(Book book) {
         if (book == null) {

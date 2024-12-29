@@ -21,11 +21,18 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/categories")
 public class CategoryController {
 
-    @Autowired
-    private CategoryService categoryService;
+
+    private final CategoryService categoryService;
+
+    private final BookService bookService;
+
 
     @Autowired
-    private BookService bookService;
+    public CategoryController(CategoryService categoryService, BookService bookService) {
+        this.categoryService = categoryService;
+        this.bookService = bookService;
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
@@ -71,7 +78,7 @@ public class CategoryController {
 public ResponseEntity<List<BookDTO>> getBooksByCategory(@PathVariable Long categoryId) {
     List<BookDTO> books = bookService.getBooksByCategoryId(categoryId).stream()
             .map(BookMapper::toDTO)
-            .collect(Collectors.toList());
+            .toList();
 
     if (books.isEmpty()) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
