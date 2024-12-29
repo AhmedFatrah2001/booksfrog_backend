@@ -33,11 +33,12 @@ class BookServiceTest {
     private BookService bookService;
 
     private Book book;
+    private Category category;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        Category category = Category.builder().id(1L).name("Test Category").build();
+        category = Category.builder().id(1L).name("Test Category").build();
         book = Book.builder()
                 .id(1L)
                 .title("Test Book")
@@ -68,6 +69,25 @@ class BookServiceTest {
 
         assertFalse(result.isPresent());
         verify(bookRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void testGetBookContentById_BookExists() {
+        book.setContent(new byte[]{1, 2, 3});
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+
+        byte[] content = bookService.getBookContentById(1L);
+
+        assertArrayEquals(new byte[]{1, 2, 3}, content);
+        verify(bookRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void testGetBookContentById_BookNotFound() {
+        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> bookService.getBookContentById(1L));
+        assertEquals("Book not found with ID 1", exception.getMessage());
     }
 
     @Test
@@ -112,7 +132,6 @@ class BookServiceTest {
         assertEquals(book.getTitle(), books.get(0).getTitle());
         verify(bookRepository, times(1)).findByCategory_Id(1L);
     }
-
 
 
     @Test
@@ -176,5 +195,56 @@ class BookServiceTest {
         assertEquals(1, result.getContent().size());
         assertEquals(book.getTitle(), result.getContent().get(0).getTitle());
         verify(bookRepository, times(1)).findAll(PageRequest.of(0, 10));
+    }
+
+    @Test
+    void testSearchBooksByTitle() {
+        Page<Book> bookPage = new PageImpl<>(Collections.singletonList(book));
+        when(bookRepository.findByTitleContainingIgnoreCase(eq("Test"), any(PageRequest.class))).thenReturn(bookPage);
+
+        Page<BookDTO> result = bookService.searchBooksByTitle("Test", PageRequest.of(0, 10));
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(book.getTitle(), result.getContent().get(0).getTitle());
+        verify(bookRepository, times(1)).findByTitleContainingIgnoreCase(eq("Test"), any(PageRequest.class));
+    }
+
+    @Test
+    void testSearchBooksByAuthor() {
+        Page<Book> bookPage = new PageImpl<>(Collections.singletonList(book));
+        when(bookRepository.findByAuthorContainingIgnoreCase(eq("Author"), any(PageRequest.class))).thenReturn(bookPage);
+
+        Page<BookDTO> result = bookService.searchBooksByAuthor("Author", PageRequest.of(0, 10));
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(book.getAuthor(), result.getContent().get(0).getAuthor());
+        verify(bookRepository, times(1)).findByAuthorContainingIgnoreCase(eq("Author"), any(PageRequest.class));
+    }
+
+    @Test
+    void testSearchBooksByCategory() {
+        Page<Book> bookPage = new PageImpl<>(Collections.singletonList(book));
+        when(bookRepository.findByCategoryNameContainingIgnoreCase(eq("Category"), any(PageRequest.class))).thenReturn(bookPage);
+
+        Page<BookDTO> result = bookService.searchBooksByCategory("Category", PageRequest.of(0, 10));
+
+        assertNotNull(result);
+        assertEquals(1, result.getContent().size());
+        assertEquals(book.getCategory().getName(), result.getContent().get(0).getCategoryName());
+        verify(bookRepository, times(1)).findByCategoryNameContainingIgnoreCase(eq("Category"), any(PageRequest.class));
+    }
+
+    @Test
+    void testGetLast12Books() {
+        when(bookRepository.findLast12Books()).thenReturn(Collections.singletonList(book));
+
+        List<BookDTO> books = bookService.getLast12Books();
+
+        assertNotNull(books);
+        assertEquals(1, books.size());
+        assertEquals(book.getTitle(), books.get(0).getTitle());
+        verify(bookRepository, times(1)).findLast12Books();
     }
 }
