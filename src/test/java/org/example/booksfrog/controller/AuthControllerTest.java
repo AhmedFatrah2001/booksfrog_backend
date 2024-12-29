@@ -15,6 +15,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -35,30 +37,92 @@ class AuthControllerTest {
     @InjectMocks
     private AuthController authController;
 
+    private AuthRequest authRequest;
+    private RegisterRequest registerRequest;
     private User user;
+    private UserDetails userDetails;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        authRequest = new AuthRequest("testuser", "password");
+        registerRequest = new RegisterRequest();
+        registerRequest.setUsername("newuser");
+        registerRequest.setEmail("newuser@example.com");
+        registerRequest.setPassword("password");
+
         user = User.builder()
                 .id(1L)
                 .username("testuser")
-                .email("test@example.com")
+                .email("testuser@example.com")
                 .password("password")
-                .isPremium(true)
+                .isPremium(false)
+                .build();
+
+        userDetails = org.springframework.security.core.userdetails.User.builder()
+                .username("testuser")
+                .password("password")
+                .authorities(Collections.emptyList())
                 .build();
     }
 
+    @Test
+    void testAuthRequestConstructor() {
+        AuthRequest request = new AuthRequest("username", "password");
+        assertEquals("username", request.getUsername());
+        assertEquals("password", request.getPassword());
+    }
 
+    @Test
+    void testRegisterRequestConstructorAndSetters() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("username");
+        request.setEmail("email@example.com");
+        request.setPassword("password");
+        request.setIsPremium(true);
+        request.setProfilePicture(new byte[]{1, 2, 3});
+
+        assertEquals("username", request.getUsername());
+        assertEquals("email@example.com", request.getEmail());
+        assertEquals("password", request.getPassword());
+        assertTrue(request.getIsPremium());
+        assertArrayEquals(new byte[]{1, 2, 3}, request.getProfilePicture());
+    }
+
+    @Test
+    void testAuthResponseConstructor() {
+        AuthResponse response = new AuthResponse("jwt-token", user);
+
+        assertEquals("jwt-token", response.getToken());
+        assertEquals(user.getUsername(), response.getUsername());
+        assertEquals(user.getEmail(), response.getEmail());
+        assertEquals(user.isPremium(), response.isPremium());
+        assertNull(response.getProfilePicture());
+    }
+
+    @Test
+    void testLogin_Success() {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
+        when(userDetailsService.loadUserByUsername(authRequest.getUsername())).thenReturn(userDetails);
+        when(jwtUtil.generateToken(userDetails.getUsername())).thenReturn("jwt-token");
+        when(userService.findByUsername(authRequest.getUsername())).thenReturn(user);
+
+        ResponseEntity<?> response = authController.login(authRequest);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        AuthResponse authResponse = (AuthResponse) response.getBody();
+        assertNotNull(authResponse);
+        assertEquals("jwt-token", authResponse.getToken());
+        assertEquals(user.getUsername(), authResponse.getUsername());
+    }
 
     @Test
     void testLogin_UserNotFound() {
-        AuthRequest authRequest = new AuthRequest("testuser", "password");
-
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
-        when(userDetailsService.loadUserByUsername("testuser")).thenReturn(mock(UserDetails.class));
-        when(jwtUtil.generateToken("testuser")).thenReturn("test-token");
-        when(userService.findByUsername("testuser")).thenReturn(null);
+        when(userDetailsService.loadUserByUsername(authRequest.getUsername())).thenReturn(userDetails);
+        when(jwtUtil.generateToken(userDetails.getUsername())).thenReturn("jwt-token");
+        when(userService.findByUsername(authRequest.getUsername())).thenReturn(null);
 
         ResponseEntity<?> response = authController.login(authRequest);
 
@@ -68,14 +132,8 @@ class AuthControllerTest {
 
     @Test
     void testRegister_Success() {
-        RegisterRequest registerRequest = new RegisterRequest();
-        registerRequest.setUsername("testuser");
-        registerRequest.setEmail("test@example.com");
-        registerRequest.setPassword("password");
-        registerRequest.setIsPremium(true);
-
-        when(userService.isUsernameTaken("testuser")).thenReturn(false);
-        when(userService.isEmailTaken("test@example.com")).thenReturn(false);
+        when(userService.isUsernameTaken(registerRequest.getUsername())).thenReturn(false);
+        when(userService.isEmailTaken(registerRequest.getEmail())).thenReturn(false);
         when(userService.createUser(any(User.class))).thenReturn(user);
 
         ResponseEntity<?> response = authController.register(registerRequest);
@@ -83,17 +141,12 @@ class AuthControllerTest {
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         User createdUser = (User) response.getBody();
         assertNotNull(createdUser);
-        assertEquals("testuser", createdUser.getUsername());
+        assertEquals(user.getUsername(), createdUser.getUsername());
     }
 
     @Test
     void testRegister_UsernameOrEmailTaken() {
-        RegisterRequest registerRequest = new RegisterRequest();
-        registerRequest.setUsername("testuser");
-        registerRequest.setEmail("test@example.com");
-        registerRequest.setPassword("password");
-
-        when(userService.isUsernameTaken("testuser")).thenReturn(true);
+        when(userService.isUsernameTaken(registerRequest.getUsername())).thenReturn(true);
 
         ResponseEntity<?> response = authController.register(registerRequest);
 
@@ -102,11 +155,8 @@ class AuthControllerTest {
     }
 
     @Test
-    void testRegister_InvalidRequest() {
-        RegisterRequest registerRequest = new RegisterRequest();
+    void testRegister_MissingMandatoryFields() {
         registerRequest.setUsername("");
-        registerRequest.setEmail(null);
-        registerRequest.setPassword("");
 
         ResponseEntity<?> response = authController.register(registerRequest);
 
