@@ -2,7 +2,6 @@ package org.example.booksfrog.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.example.booksfrog.dto.BookDTO;
 import org.example.booksfrog.mapper.BookMapper;
@@ -19,11 +18,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class BookService {
 
-    @Autowired
-    private BookRepository bookRepository;
+
+    private final BookRepository bookRepository;
+
+    private final CategoryRepository categoryRepository;
 
     @Autowired
-    private CategoryRepository categoryRepository;
+    public BookService(BookRepository bookRepository, CategoryRepository categoryRepository) {
+        this.bookRepository = bookRepository;
+        this.categoryRepository = categoryRepository;
+    }
 
     // Fetch a book by its ID
     public Optional<Book> getBookById(Long id) {
@@ -65,7 +69,7 @@ public class BookService {
         return bookRepository.findLast12Books()
                 .stream()
                 .map(BookMapper::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // Fetch book content by ID, returning it as byte[]
