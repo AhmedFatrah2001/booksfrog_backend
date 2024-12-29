@@ -1,8 +1,6 @@
 package org.example.booksfrog.controller;
 
 import org.example.booksfrog.dto.BookDTO;
-import org.example.booksfrog.mapper.BookMapper;
-import org.example.booksfrog.model.Book;
 import org.example.booksfrog.model.Category;
 import org.example.booksfrog.service.BookService;
 import org.example.booksfrog.service.CategoryService;
