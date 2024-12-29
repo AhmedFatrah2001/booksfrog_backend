@@ -22,55 +22,62 @@ class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
-    private BCryptPasswordEncoder passwordEncoder;
-
-    private User sampleUser;
+    private User user;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        passwordEncoder = new BCryptPasswordEncoder();
-        sampleUser = new User();
-        sampleUser.setId(1L);
-        sampleUser.setUsername("testUser");
-        sampleUser.setEmail("test@example.com");
-        sampleUser.setPassword("password123");
+        user = User.builder()
+                .id(1L)
+                .username("testuser")
+                .email("test@example.com")
+                .password("password")
+                .isPremium(true)
+                .build();
     }
 
     @Test
-    void testGetUserById() {
-        when(userRepository.findById(1L)).thenReturn(Optional.of(sampleUser));
+    void testGetUserById_UserExists() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        Optional<User> user = userService.getUserById(1L);
+        Optional<User> result = userService.getUserById(1L);
 
-        assertTrue(user.isPresent());
-        assertEquals("testUser", user.get().getUsername());
+        assertTrue(result.isPresent());
+        assertEquals(user.getId(), result.get().getId());
         verify(userRepository, times(1)).findById(1L);
     }
 
     @Test
-    void testGetUserByUsername() {
-        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(sampleUser));
+    void testGetUserById_UserNotFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Optional<User> user = userService.getUserByUsername("testUser");
+        Optional<User> result = userService.getUserById(1L);
 
-        assertTrue(user.isPresent());
-        assertEquals("test@example.com", user.get().getEmail());
-        verify(userRepository, times(1)).findByUsername("testUser");
+        assertFalse(result.isPresent());
+        verify(userRepository, times(1)).findById(1L);
     }
 
     @Test
-    void testGetUserByEmail() {
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(sampleUser));
+    void testCreateUser() {
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        Optional<User> user = userService.getUserByEmail("test@example.com");
+        User createdUser = userService.createUser(user);
 
-        assertTrue(user.isPresent());
-        assertEquals("testUser", user.get().getUsername());
-        verify(userRepository, times(1)).findByEmail("test@example.com");
+        assertNotNull(createdUser);
+        assertEquals(user.getUsername(), createdUser.getUsername());
+        verify(userRepository, times(1)).save(any(User.class));
     }
 
+    @Test
+    void testUpdateUser() {
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
+        User updatedUser = userService.updateUser(user);
+
+        assertNotNull(updatedUser);
+        assertEquals(user.getUsername(), updatedUser.getUsername());
+        verify(userRepository, times(1)).save(any(User.class));
+    }
 
     @Test
     void testDeleteUser() {
@@ -81,30 +88,41 @@ class UserServiceTest {
         verify(userRepository, times(1)).deleteById(1L);
     }
 
-
-
     @Test
-    void testCheckPassword() {
-        String rawPassword = "password123";
-        String hashedPassword = passwordEncoder.encode(rawPassword);
+    void testIsUsernameTaken_UsernameExists() {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-        assertTrue(userService.checkPassword(rawPassword, hashedPassword));
-        assertFalse(userService.checkPassword("wrongPassword", hashedPassword));
+        boolean isTaken = userService.isUsernameTaken("testuser");
+
+        assertTrue(isTaken);
+        verify(userRepository, times(1)).findByUsername("testuser");
     }
 
     @Test
-    void testIsUsernameTaken() {
-        when(userRepository.findByUsername("testUser")).thenReturn(Optional.of(sampleUser));
+    void testIsUsernameTaken_UsernameNotExists() {
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.empty());
 
-        assertTrue(userService.isUsernameTaken("testUser"));
-        verify(userRepository, times(1)).findByUsername("testUser");
+        boolean isTaken = userService.isUsernameTaken("testuser");
+
+        assertFalse(isTaken);
+        verify(userRepository, times(1)).findByUsername("testuser");
     }
 
     @Test
-    void testIsEmailTaken() {
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(sampleUser));
+    void testCheckPassword_Match() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String rawPassword = "password";
+        String encodedPassword = encoder.encode(rawPassword);
 
-        assertTrue(userService.isEmailTaken("test@example.com"));
-        verify(userRepository, times(1)).findByEmail("test@example.com");
+        assertTrue(userService.checkPassword(rawPassword, encodedPassword));
+    }
+
+    @Test
+    void testCheckPassword_NoMatch() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String rawPassword = "password";
+        String encodedPassword = encoder.encode("differentpassword");
+
+        assertFalse(userService.checkPassword(rawPassword, encodedPassword));
     }
 }

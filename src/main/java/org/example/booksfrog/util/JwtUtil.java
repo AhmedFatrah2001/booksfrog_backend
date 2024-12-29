@@ -48,4 +48,9 @@ public class JwtUtil {
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
+
+    public SecretKey getSecretKey() {
+        return SECRET_KEY;
+    }
+
 }

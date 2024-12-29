@@ -14,7 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,46 +32,66 @@ class BookServiceTest {
     @InjectMocks
     private BookService bookService;
 
-    private Book sampleBook;
-    private Category sampleCategory;
+    private Book book;
+    private Category category;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        sampleBook = new Book();
-        sampleBook.setId(1L);
-        sampleBook.setTitle("Sample Book");
-        sampleBook.setAuthor("Author Name");
-        sampleBook.setContent(new byte[10]); // Dummy content
-
-        sampleCategory = new Category();
-        sampleCategory.setId(1L);
-        sampleCategory.setName("Category Name");
+        category = Category.builder().id(1L).name("Test Category").build();
+        book = Book.builder()
+                .id(1L)
+                .title("Test Book")
+                .author("Test Author")
+                .summary("Test Summary")
+                .category(category)
+                .views(10)
+                .totalPages(100)
+                .build();
     }
 
     @Test
-    void testGetBookById() {
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(sampleBook));
+    void testGetBookById_BookExists() {
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
 
         Optional<Book> result = bookService.getBookById(1L);
 
         assertTrue(result.isPresent());
-        assertEquals("Sample Book", result.get().getTitle());
+        assertEquals(book.getId(), result.get().getId());
         verify(bookRepository, times(1)).findById(1L);
     }
 
     @Test
-    void testGetBookContentById() {
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(sampleBook));
+    void testGetBookById_BookNotFound() {
+        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
 
-        byte[] content = bookService.getBookContentById(1L);
+        Optional<Book> result = bookService.getBookById(1L);
 
-        assertNotNull(content);
-        assertEquals(10, content.length);
+        assertFalse(result.isPresent());
         verify(bookRepository, times(1)).findById(1L);
     }
 
+    @Test
+    void testCreateBook() {
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
 
+        Book createdBook = bookService.createBook(book);
+
+        assertNotNull(createdBook);
+        assertEquals(book.getTitle(), createdBook.getTitle());
+        verify(bookRepository, times(1)).save(any(Book.class));
+    }
+
+    @Test
+    void testUpdateBook() {
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
+
+        Book updatedBook = bookService.updateBook(book);
+
+        assertNotNull(updatedBook);
+        assertEquals(book.getTitle(), updatedBook.getTitle());
+        verify(bookRepository, times(1)).save(any(Book.class));
+    }
 
     @Test
     void testDeleteBook() {
@@ -82,53 +102,66 @@ class BookServiceTest {
         verify(bookRepository, times(1)).deleteById(1L);
     }
 
-
-
     @Test
-    void testGetLast12Books() {
-        List<Book> books = Arrays.asList(sampleBook, new Book());
-        when(bookRepository.findLast12Books()).thenReturn(books);
+    void testGetBooksByCategoryId() {
+        when(bookRepository.findByCategory_Id(1L)).thenReturn(Collections.singletonList(book));
 
-        List<BookDTO> result = bookService.getLast12Books();
+        List<Book> books = bookService.getBooksByCategoryId(1L);
 
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        verify(bookRepository, times(1)).findLast12Books();
+        assertNotNull(books);
+        assertEquals(1, books.size());
+        assertEquals(book.getTitle(), books.get(0).getTitle());
+        verify(bookRepository, times(1)).findByCategory_Id(1L);
     }
 
     @Test
-    void testAssignCategory_Success() {
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(sampleBook));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(sampleCategory));
+    void testAssignCategory_CategoryExists() {
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(bookRepository.save(any(Book.class))).thenReturn(book);
 
-        boolean success = bookService.assignCategory(1L, 1L);
+        boolean result = bookService.assignCategory(1L, 1L);
 
-        assertTrue(success);
-        verify(bookRepository, times(1)).save(sampleBook);
+        assertTrue(result);
+        assertEquals(category, book.getCategory());
+        verify(bookRepository, times(1)).findById(1L);
+        verify(categoryRepository, times(1)).findById(1L);
+        verify(bookRepository, times(1)).save(any(Book.class));
     }
 
     @Test
-    void testAssignCategory_Failure() {
-        when(bookRepository.findById(1L)).thenReturn(Optional.empty());
+    void testAssignCategory_CategoryNotFound() {
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
 
-        boolean success = bookService.assignCategory(1L, 1L);
+        boolean result = bookService.assignCategory(1L, 1L);
 
-        assertFalse(success);
+        assertFalse(result);
+        verify(bookRepository, times(1)).findById(1L);
+        verify(categoryRepository, times(1)).findById(1L);
         verify(bookRepository, never()).save(any(Book.class));
     }
 
+    @Test
+    void testRecalculateTotalPages() {
+        when(bookRepository.findAll()).thenReturn(Collections.singletonList(book));
+
+        bookService.recalculateTotalPages();
+
+        verify(bookRepository, times(1)).findAll();
+        verify(bookRepository, times(1)).save(any(Book.class));
+    }
 
     @Test
-    void testSearchBooksByTitle() {
-        Page<Book> page = new PageImpl<>(List.of(sampleBook));
-        when(bookRepository.findByTitleContainingIgnoreCase(eq("Sample"), any(PageRequest.class)))
-                .thenReturn(page);
+    void testGetAllBooks() {
+        Page<Book> bookPage = new PageImpl<>(Collections.singletonList(book));
+        when(bookRepository.findAll(PageRequest.of(0, 10))).thenReturn(bookPage);
 
-        Page<BookDTO> result = bookService.searchBooksByTitle("Sample", PageRequest.of(0, 10));
+        Page<BookDTO> result = bookService.getAllBooks(0, 10);
 
         assertNotNull(result);
-        assertEquals(1, result.getTotalElements());
-        verify(bookRepository, times(1))
-                .findByTitleContainingIgnoreCase(eq("Sample"), any(PageRequest.class));
+        assertEquals(1, result.getContent().size());
+        assertEquals(book.getTitle(), result.getContent().get(0).getTitle());
+        verify(bookRepository, times(1)).findAll(PageRequest.of(0, 10));
     }
 }

@@ -68,6 +68,8 @@ public class UserService {
     }
 
     public User findByUsername(String username) {
-        return userRepository.findByUsername(username).isPresent() ? userRepository.findByUsername(username).get() : null;
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        return userOptional.orElse(null);
     }
+
 }
