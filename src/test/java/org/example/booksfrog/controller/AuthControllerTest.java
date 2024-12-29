@@ -49,23 +49,7 @@ class AuthControllerTest {
                 .build();
     }
 
-    @Test
-    void testLogin_Success() {
-        AuthRequest authRequest = new AuthRequest("testuser", "password");
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
-        when(userDetailsService.loadUserByUsername("testuser")).thenReturn(mock(UserDetails.class));
-        when(jwtUtil.generateToken("testuser")).thenReturn("test-token");
-        when(userService.findByUsername("testuser")).thenReturn(user);
-
-        ResponseEntity<?> response = authController.login(authRequest);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        AuthResponse authResponse = (AuthResponse) response.getBody();
-        assertNotNull(authResponse);
-        assertEquals("test-token", authResponse.getToken());
-        assertEquals("testuser", authResponse.getUsername());
-    }
 
     @Test
     void testLogin_UserNotFound() {

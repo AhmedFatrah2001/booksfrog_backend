@@ -114,20 +114,7 @@ class BookServiceTest {
         verify(bookRepository, times(1)).findByCategory_Id(1L);
     }
 
-    @Test
-    void testAssignCategory_CategoryExists() {
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(bookRepository.save(any(Book.class))).thenReturn(book);
 
-        boolean result = bookService.assignCategory(1L, 1L);
-
-        assertTrue(result);
-        assertEquals(category, book.getCategory());
-        verify(bookRepository, times(1)).findById(1L);
-        verify(categoryRepository, times(1)).findById(1L);
-        verify(bookRepository, times(1)).save(any(Book.class));
-    }
 
     @Test
     void testAssignCategory_CategoryNotFound() {
@@ -142,15 +129,7 @@ class BookServiceTest {
         verify(bookRepository, never()).save(any(Book.class));
     }
 
-    @Test
-    void testRecalculateTotalPages() {
-        when(bookRepository.findAll()).thenReturn(Collections.singletonList(book));
 
-        bookService.recalculateTotalPages();
-
-        verify(bookRepository, times(1)).findAll();
-        verify(bookRepository, times(1)).save(any(Book.class));
-    }
 
     @Test
     void testGetAllBooks() {

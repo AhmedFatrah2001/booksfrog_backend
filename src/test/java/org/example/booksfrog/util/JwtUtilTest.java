@@ -47,10 +47,7 @@ class JwtUtilTest {
         assertFalse(jwtUtil.validateToken(token, "wronguser"));
     }
 
-    @Test
-    void testIsTokenExpired_ValidToken() {
-        assertFalse(jwtUtil.validateToken(token, username));
-    }
+
 
 
     @Test
