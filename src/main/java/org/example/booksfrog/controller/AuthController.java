@@ -179,6 +179,7 @@ class AuthRequest {
 
 // Separate AuthResponse class for returning the token
 class AuthResponse {
+    private Long id; // Add user ID
     private String token;
     private String username;
     private String email;
@@ -186,6 +187,7 @@ class AuthResponse {
     private byte[] profilePicture;
 
     public AuthResponse(String token, User user) {
+        this.id = user.getId(); // Set user ID
         this.token = token;
         this.username = user.getUsername();
         this.email = user.getEmail();
@@ -194,6 +196,14 @@ class AuthResponse {
     }
 
     // Getters and setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getToken() {
         return token;
     }
@@ -234,4 +244,5 @@ class AuthResponse {
         this.profilePicture = profilePicture;
     }
 }
+
 
