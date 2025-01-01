@@ -4,6 +4,7 @@ import lombok.*;
 import jakarta.persistence.*;
 
 import java.util.Base64;
+import java.util.List;
 
 @Entity
 @Data
@@ -34,6 +35,9 @@ public class Book {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @OneToMany(mappedBy = "book")
+    List<Favorite> favorites;
 
     @Column(nullable = false, columnDefinition = "int default 0")
     private int views;
