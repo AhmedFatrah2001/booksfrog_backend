@@ -45,13 +45,34 @@ public class UserService {
     }
 
     public User updateUser(User user) {
-        // Hash the password before updating the user
-        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+        // Retrieve the existing user from the database
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Preserve the old password if no new password is provided
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            user.setPassword(existingUser.getPassword());
+        } else {
+            // Hash the new password if it is provided
             String hashedPassword = passwordEncoder.encode(user.getPassword());
             user.setPassword(hashedPassword);
         }
-        return userRepository.save(user);
+
+        // Update other fields (ensure sensitive fields are handled correctly)
+        if (user.getUsername() != null) {
+            existingUser.setUsername(user.getUsername());
+        }
+        if (user.getEmail() != null) {
+            existingUser.setEmail(user.getEmail());
+        }
+        if (user.getProfilePicture() != null) {
+            existingUser.setProfilePicture(user.getProfilePicture());
+        }
+
+        // Save the updated user
+        return userRepository.save(existingUser);
     }
+
 
     public boolean checkPassword(String rawPassword, String encodedPassword) {
         // Check if raw password matches the encoded password
