@@ -1,6 +1,7 @@
 package org.example.booksfrog.controller;
 
-import org.example.booksfrog.model.Favorite;
+import org.example.booksfrog.dto.FavoriteFullDTO;
+import org.example.booksfrog.dto.FavoriteIdDTO;
 import org.example.booksfrog.service.FavoriteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +26,16 @@ public class FavoriteController {
         return ResponseEntity.ok("Book added to favorites");
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<Favorite>> getFavorites(@PathVariable Long userId) {
-        List<Favorite> favorites = favoriteService.getFavoritesByUserId(userId);
-        return ResponseEntity.ok(favorites);
+    @GetMapping("/{userId}/book-ids")
+    public ResponseEntity<List<FavoriteIdDTO>> getFavoriteBookIds(@PathVariable Long userId) {
+        List<FavoriteIdDTO> favoriteBookIds = favoriteService.getFavoriteBookIdsByUserId(userId);
+        return ResponseEntity.ok(favoriteBookIds);
+    }
+
+    @GetMapping("/{userId}/book-details")
+    public ResponseEntity<List<FavoriteFullDTO>> getFavoriteBookDetails(@PathVariable Long userId) {
+        List<FavoriteFullDTO> favoriteBookDetails = favoriteService.getFavoriteBookDetailsByUserId(userId);
+        return ResponseEntity.ok(favoriteBookDetails);
     }
 
     @DeleteMapping("/{userId}/{bookId}")

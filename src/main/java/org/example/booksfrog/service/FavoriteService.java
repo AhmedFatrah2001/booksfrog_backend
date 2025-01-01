@@ -1,5 +1,7 @@
 package org.example.booksfrog.service;
 
+import org.example.booksfrog.dto.FavoriteFullDTO;
+import org.example.booksfrog.dto.FavoriteIdDTO;
 import org.example.booksfrog.model.Book;
 import org.example.booksfrog.model.Favorite;
 import org.example.booksfrog.model.User;
@@ -10,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class FavoriteService {
@@ -40,8 +43,26 @@ public class FavoriteService {
         favoriteRepository.save(favorite);
     }
 
-    public List<Favorite> getFavoritesByUserId(Long userId) {
-        return favoriteRepository.findByUserId(userId);
+    public List<FavoriteFullDTO> getFavoriteBookDetailsByUserId(Long userId) {
+        return favoriteRepository.findByUserId(userId)
+                .stream()
+                .map(favorite -> new FavoriteFullDTO(
+                        favorite.getBook().getId(),
+                        favorite.getBook().getTitle(),
+                        favorite.getBook().getAuthor(),
+                        favorite.getBook().getSummary(),
+                        favorite.getBook().getCoverImage(),
+                        favorite.getBook().getCategory().getId(),
+                        favorite.getBook().getCategory().getName()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    public List<FavoriteIdDTO> getFavoriteBookIdsByUserId(Long userId) {
+        return favoriteRepository.findByUserId(userId)
+                .stream()
+                .map(favorite -> new FavoriteIdDTO(favorite.getBook().getId()))
+                .collect(Collectors.toList());
     }
 
     public void removeFavorite(Long userId, Long bookId) {
