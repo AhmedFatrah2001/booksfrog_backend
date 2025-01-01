@@ -36,12 +36,19 @@ public class FavoriteService {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
+        // Check if the favorite already exists
+        boolean exists = favoriteRepository.existsByUserAndBook(user, book);
+        if (exists) {
+            throw new RuntimeException("Book is already in favorites");
+        }
+
         Favorite favorite = Favorite.builder()
                 .user(user)
                 .book(book)
                 .build();
         favoriteRepository.save(favorite);
     }
+
 
     public List<FavoriteFullDTO> getFavoriteBookDetailsByUserId(Long userId) {
         return favoriteRepository.findByUserId(userId)
