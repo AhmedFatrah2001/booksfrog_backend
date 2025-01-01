@@ -32,10 +32,10 @@ public class FavoriteController {
         return ResponseEntity.ok(favoriteBookIds);
     }
 
-    @GetMapping("/{userId}/book-details")
-    public ResponseEntity<List<FavoriteFullDTO>> getFavoriteBookDetails(@PathVariable Long userId) {
-        List<FavoriteFullDTO> favoriteBookDetails = favoriteService.getFavoriteBookDetailsByUserId(userId);
-        return ResponseEntity.ok(favoriteBookDetails);
+    @GetMapping("/{userId}/full-details")
+    public ResponseEntity<List<FavoriteFullDTO>> getFavoriteFullDetails(@PathVariable Long userId) {
+        List<FavoriteFullDTO> favoriteDetails = favoriteService.getFavoriteBookDetailsByUserId(userId);
+        return ResponseEntity.ok(favoriteDetails);
     }
 
     @DeleteMapping("/{userId}/{bookId}")

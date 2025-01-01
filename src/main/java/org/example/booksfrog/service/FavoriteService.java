@@ -46,15 +46,7 @@ public class FavoriteService {
     public List<FavoriteFullDTO> getFavoriteBookDetailsByUserId(Long userId) {
         return favoriteRepository.findByUserId(userId)
                 .stream()
-                .map(favorite -> new FavoriteFullDTO(
-                        favorite.getBook().getId(),
-                        favorite.getBook().getTitle(),
-                        favorite.getBook().getAuthor(),
-                        favorite.getBook().getSummary(),
-                        favorite.getBook().getCoverImage(),
-                        favorite.getBook().getCategory().getId(),
-                        favorite.getBook().getCategory().getName()
-                ))
+                .map(FavoriteFullDTO::fromEntity)
                 .collect(Collectors.toList());
     }
 
