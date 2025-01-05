@@ -1,9 +1,12 @@
 package org.example.booksfrog.controller;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.example.booksfrog.dto.BookDTO;
 import org.example.booksfrog.mapper.BookMapper;
 import org.example.booksfrog.model.Book;
@@ -13,6 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+
+import javax.imageio.ImageIO;
 
 @RestController
 @RequestMapping("/api/books")
@@ -117,14 +122,9 @@ public class BookController {
         if (content == null || content.length == 0) {
             return ResponseEntity.noContent().build(); 
         }
-
-        // Set the PDF-specific headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
 
-        // Decide if you want to force download or display inline
-        // "inline" means the browser might show it in a PDF viewer
-        // "attachment" means the browser might trigger a download
         ContentDisposition contentDisposition = ContentDisposition.inline()
                 .filename("book-" + id + ".pdf")
                 .build();
@@ -132,4 +132,41 @@ public class BookController {
 
         return new ResponseEntity<>(content, headers, HttpStatus.OK);
     }
+    @GetMapping("/{id}/content-img/{page}")
+    public ResponseEntity<Map<String, Object>> getBookContentImage(@PathVariable Long id, @PathVariable int page) {
+        try {
+            byte[] content = bookService.getBookContentById(id);
+            if (content == null || content.length == 0) {
+                return ResponseEntity.noContent().build();
+            }
+
+            PDDocument document = PDDocument.load(content);
+            int totalPages = document.getNumberOfPages();
+
+            if (page >= totalPages) {
+                document.close();
+                return ResponseEntity.notFound().build();
+            }
+
+            PDFRenderer renderer = new PDFRenderer(document);
+            BufferedImage image = renderer.renderImageWithDPI(page, 80, ImageType.RGB);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+            String base64Image = Base64.getEncoder().encodeToString(baos.toByteArray());
+
+            document.close();
+
+            // Create a response map containing the image data and total pages
+            Map<String, Object> response = new HashMap<>();
+            response.put("image", base64Image);
+            response.put("totalPages", totalPages);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }
