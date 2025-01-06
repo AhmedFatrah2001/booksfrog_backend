@@ -1,6 +1,5 @@
 package org.example.booksfrog.controller;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
@@ -13,10 +12,14 @@ import org.example.booksfrog.dto.BookDTO;
 import org.example.booksfrog.mapper.BookMapper;
 import org.example.booksfrog.model.Book;
 import org.example.booksfrog.service.BookService;
+import org.example.booksfrog.service.TokenService;
+import org.example.booksfrog.util.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
@@ -27,9 +30,12 @@ public class BookController {
 
     private final BookService bookService;
 
+    private final TokenService tokenService;
+
     @Autowired
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, TokenService tokenService) {
         this.bookService = bookService;
+        this.tokenService = tokenService;
     }
 
     @GetMapping("/{id}")
@@ -120,9 +126,12 @@ public class BookController {
     // New endpoint to return PDF content
     @GetMapping("/{id}/content")
     public ResponseEntity<byte[]> getBookContent(@PathVariable Long id) {
+        // Fetch the user's token
+        Long userId = getAuthenticatedUserId(); // Assuming this method retrieves the user ID
+        tokenService.deductTokens(userId, 10); // Deduct 5 tokens
         byte[] content = bookService.getBookContentById(id);
         if (content == null || content.length == 0) {
-            return ResponseEntity.noContent().build(); 
+            return ResponseEntity.noContent().build();
         }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
@@ -137,6 +146,10 @@ public class BookController {
     @GetMapping("/{id}/content-img/{page}")
     public ResponseEntity<Map<String, Object>> getBookContentImage(@PathVariable Long id, @PathVariable int page) {
         try {
+            // Fetch the user's token
+            Long userId = getAuthenticatedUserId(); // Assuming this method retrieves the user ID
+            tokenService.deductTokens(userId, 5); // Deduct 5 tokens
+
             byte[] content = bookService.getBookContentById(id);
             if (content == null || content.length == 0) {
                 return ResponseEntity.noContent().build();
@@ -165,11 +178,20 @@ public class BookController {
             response.put("totalPages", totalPages);
 
             return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            // Handle token-related exceptions
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
+    private Long getAuthenticatedUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getId();
+        return userId;
+    }
 
 }

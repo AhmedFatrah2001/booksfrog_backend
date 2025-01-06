@@ -30,10 +30,13 @@ public class User {
 
     private Boolean isPremium;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Token token;
+
     @Column(updatable = false)
     private LocalDateTime registrationDate;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Favorite> favorites;
 
     @PrePersist

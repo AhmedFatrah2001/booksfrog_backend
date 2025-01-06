@@ -5,7 +5,10 @@ import org.example.booksfrog.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.Optional;
 
 @Service
@@ -92,5 +95,25 @@ public class UserService {
         Optional<User> userOptional = userRepository.findByUsername(username);
         return userOptional.orElse(null);
     }
+
+    public void uploadUserImage(Long userId, MultipartFile image) {
+        Optional<User> userOptional = getUserById(userId);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            try {
+                // Convert the image to Base64 and set it to the user
+                String base64Image = Base64.getEncoder().encodeToString(image.getBytes());
+                user.setProfilePicture(base64Image.getBytes());
+
+                // Save the updated user with the image
+                updateUser(user);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to process image", e);
+            }
+        } else {
+            throw new RuntimeException("User not found");
+        }
+    }
+
 
 }
