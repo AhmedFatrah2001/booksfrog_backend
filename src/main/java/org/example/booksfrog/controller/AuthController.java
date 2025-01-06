@@ -1,6 +1,7 @@
 package org.example.booksfrog.controller;
 
 import org.example.booksfrog.service.CustomUserDetailsService;
+import org.example.booksfrog.service.TokenService;
 import org.example.booksfrog.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,17 +21,20 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
     private final UserService userService;
+    private final TokenService tokenService;
 
     @Autowired
     public AuthController(
             AuthenticationManager authenticationManager,
             JwtUtil jwtUtil,
             CustomUserDetailsService userDetailsService,
-            UserService userService) {
+            UserService userService,
+            TokenService tokenService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
         this.userService = userService;
+        this.tokenService = tokenService;
     }
 
 
@@ -54,8 +58,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found.");
         }
 
+
+        int totalTokens = tokenService.getTotalTokens((user.getId()));
+
         // Return token and user details
-        return ResponseEntity.ok(new AuthResponse(token, user));
+        return ResponseEntity.ok(new AuthResponse(token, user, totalTokens));
     }
 
 
@@ -185,15 +192,18 @@ class AuthResponse {
     private String email;
     private boolean isPremium;
     private byte[] profilePicture;
+    private int totalTokens;
 
-    public AuthResponse(String token, User user) {
-        this.id = user.getId(); // Set user ID
+    public AuthResponse(String token, User user, int totalTokens) {
+        this.id = user.getId();
         this.token = token;
         this.username = user.getUsername();
         this.email = user.getEmail();
         this.isPremium = user.isPremium();
         this.profilePicture = user.getProfilePicture();
+        this.totalTokens = totalTokens; // Assign totalTokens
     }
+
 
     // Getters and setters
     public Long getId() {
@@ -242,6 +252,14 @@ class AuthResponse {
 
     public void setProfilePicture(byte[] profilePicture) {
         this.profilePicture = profilePicture;
+    }
+
+    public int getTotalTokens() {
+        return totalTokens;
+    }
+
+    public void setTotalTokens(int totalTokens) {
+        this.totalTokens = totalTokens;
     }
 }
 

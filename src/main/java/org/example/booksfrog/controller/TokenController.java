@@ -1,9 +1,11 @@
 package org.example.booksfrog.controller;
 
 import org.example.booksfrog.service.TokenService;
+import org.example.booksfrog.util.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,8 +44,9 @@ public class TokenController {
     }
 
     @PostMapping("/amount")
-    public ResponseEntity<?> addTokens(@RequestParam Long userId, @RequestParam int amount) {
+    public ResponseEntity<?> addTokens(@RequestParam int amount) {
         try {
+            Long userId = getAuthenticatedUserId();
             tokenService.addTokens(userId, amount);
 
             return ResponseEntity.ok(Map.of(
@@ -67,8 +70,10 @@ public class TokenController {
     }
 
     private Long getAuthenticatedUserId() {
-        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
-        return Long.parseLong(userIdStr);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getId();
+        return userId;
     }
 }
 

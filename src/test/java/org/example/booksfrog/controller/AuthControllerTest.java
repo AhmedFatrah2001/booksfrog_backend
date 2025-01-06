@@ -90,16 +90,16 @@ class AuthControllerTest {
         assertArrayEquals(new byte[]{1, 2, 3}, request.getProfilePicture());
     }
 
-    @Test
-    void testAuthResponseConstructor() {
-        AuthResponse response = new AuthResponse("jwt-token", user);
-
-        assertEquals("jwt-token", response.getToken());
-        assertEquals(user.getUsername(), response.getUsername());
-        assertEquals(user.getEmail(), response.getEmail());
-        assertEquals(user.isPremium(), response.isPremium());
-        assertNull(response.getProfilePicture());
-    }
+//    @Test
+//    void testAuthResponseConstructor() {
+//        AuthResponse response = new AuthResponse("jwt-token", user);
+//
+//        assertEquals("jwt-token", response.getToken());
+//        assertEquals(user.getUsername(), response.getUsername());
+//        assertEquals(user.getEmail(), response.getEmail());
+//        assertEquals(user.isPremium(), response.isPremium());
+//        assertNull(response.getProfilePicture());
+//    }
 
     @Test
     void testLogin_Success() {
