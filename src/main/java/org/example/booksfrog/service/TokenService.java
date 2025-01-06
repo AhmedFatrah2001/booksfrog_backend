@@ -1,6 +1,7 @@
 package org.example.booksfrog.service;
 
 import org.example.booksfrog.exception.InsufficientTokensException;
+import org.example.booksfrog.model.Category;
 import org.example.booksfrog.model.Token;
 import org.example.booksfrog.model.User;
 import org.example.booksfrog.repository.TokenRepository;
@@ -22,6 +23,10 @@ public class TokenService {
     public TokenService(TokenRepository tokenRepository, UserRepository userRepository) {
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
+    }
+
+    public Token createToken(Token token) {
+        return tokenRepository.save(token);
     }
 
     public void grantDailyTokens(Long userId) {

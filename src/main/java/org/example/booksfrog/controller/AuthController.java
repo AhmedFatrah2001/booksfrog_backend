@@ -1,5 +1,6 @@
 package org.example.booksfrog.controller;
 
+import org.example.booksfrog.model.Token;
 import org.example.booksfrog.service.CustomUserDetailsService;
 import org.example.booksfrog.service.TokenService;
 import org.example.booksfrog.util.JwtUtil;
@@ -92,6 +93,9 @@ public class AuthController {
                 .build();
 
         User createdUser = userService.createUser(newUser);
+
+        Token initialToken = new Token(createdUser, 50,0); // Default to 0 tokens
+        tokenService.createToken(initialToken); // Save the token entry
 
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }

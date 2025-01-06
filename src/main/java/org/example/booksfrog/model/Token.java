@@ -29,5 +29,11 @@ public class Token {
 
     @Column(name = "last_reset")
     private LocalDateTime lastReset;
+
+    public Token(User user, int dailyTokens, int totalTokens) {
+        this.user = user;
+        this.dailyTokens = dailyTokens;
+        this.totalTokens = totalTokens;
+    }
 }
 
